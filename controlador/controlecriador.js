@@ -70,23 +70,27 @@ const buscarPorId = async (req, res) => {
 };
 
 const verificarlogin = async (req, res) => {
-    const {user,senha2} = req.body;
-    if(!user || !senha2){
-        return res.status(400).json({ message :'Usuário e senha são necessários.\n'})
+    try {
+        const {user,senha2} = req.body;
+        if(!user || !senha2){
+            return res.status(400).json({ message :'Usuário e senha são necessários.\n'})
+        }
+        const encontrarUser = await usuario.findOne({primeironome : user});
+        if(!encontrarUser){
+            return res.status(400).json({ message :'Usuário não existe'});
+        }
+        const encontrarsenha = await bcrypt.compare(senha2, encontrarUser.senha);
+        if(encontrarsenha){
+            const token = jwt.sign({
+                id : encontrarUser._id , primeironome : encontrarUser.primeironome}, process.env.JWT_SECRET,{expiresIn : '2m'}
+            )
+            res.json({ message :'Usuário logado com sucesso',token});
+        }
+        else
+            res.status(400).json({ message :'Senha incorreta.\n'});
+    } catch (error) {
+        res.status(400).json({message : 'Erro interno'});
     }
-    const encontrarUser = await usuario.findOne({primeironome : user});
-    if(!encontrarUser){
-        return res.status(400).json({ message :'Usuário não existe'});
-    }
-    const encontrarsenha = await bcrypt.compare(senha2, encontrarUser.senha);
-    if(encontrarsenha){
-        const token = jwt.sign({
-            id : encontrarUser._id , primeironome : encontrarUser.primeironome}, process.env.JWT_SECRET,{expiresIn : '2m'}
-        )
-        res.json({ message :'Usuário logado com sucesso',token});
-    }
-    else
-        res.status(400).json({ message :'Senha incorreta.\n'});
 };
 
 module.exports = {buscarUsuario, lidarNovoUsuario, deletarUsuarioId, buscarPorId, verificarlogin };
