@@ -10,7 +10,9 @@ const errorhandler = require('./middleware/errorhandler');
 ligar();
 
 app.use(express.json());
-
 app.use('',rotas);
+
+
+app.use(errorhandler);
 
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
