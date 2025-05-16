@@ -22,11 +22,11 @@ const lidarNovoUsuario = async (req, res) => {
     const { user, email, senha } = req.body;
     const validacao = validarUsuario({primeironome : user, email, senha});
     if(!validacao.validado){
-        return res.status(400).json({'message': 'Erro ao validar dados'});
+        return res.status(400).json({ message: 'Erro ao validar dados'});
     }
     const duplicado = await usuario.findOne({ primeironome: user });
     if (duplicado) {
-        return res.status(400).json({ 'message': 'Usuário já existente.\n' });
+        return res.status(400).json({ message: 'Usuário já existente.\n' });
     }
     try {
         const senha2 = await bcrypt.hash(senha, 10);
@@ -35,9 +35,9 @@ const lidarNovoUsuario = async (req, res) => {
             email: email,
             senha: senha2
         });
-        res.status(200).json({ 'message': `Novo usuário ${user} criado.\n` });
+        res.status(200).json({ message : `Novo usuário ${user} criado.\n` });
     } catch (error) {
-        res.status(400).json({ 'message': error.message });
+        res.status(400).json({ message : error.message });
     }
 };
 
@@ -72,21 +72,21 @@ const buscarPorId = async (req, res) => {
 const verificarlogin = async (req, res) => {
     const {user,senha2} = req.body;
     if(!user || !senha2){
-        return res.status(400).json({'message':'Usuário e senha são necessários.\n'})
+        return res.status(400).json({ message :'Usuário e senha são necessários.\n'})
     }
     const encontrarUser = await usuario.findOne({primeironome : user});
     if(!encontrarUser){
-        return res.status(400).json({'message':'Usuário não existe'});
+        return res.status(400).json({ message :'Usuário não existe'});
     }
     const encontrarsenha = await bcrypt.compare(senha2, encontrarUser.senha);
     if(encontrarsenha){
         const token = jwt.sign({
             id : encontrarUser._id , primeironome : encontrarUser.primeironome}, process.env.JWT_SECRET,{expiresIn : '2m'}
         )
-        res.json({'message':'Usuário logado com sucesso',token});
+        res.json({ message :'Usuário logado com sucesso',token});
     }
     else
-        res.status(400).json({'message':'Senha incorreta.\n'});
+        res.status(400).json({ message :'Senha incorreta.\n'});
 };
 
 module.exports = {buscarUsuario, lidarNovoUsuario, deletarUsuarioId, buscarPorId, verificarlogin };

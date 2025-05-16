@@ -4,6 +4,8 @@ const { ligar } = require('./bancodedados/connector');
 const Usuariomodelo = require('./bancodedados/criador');
 const PORT = 3000;
 const rotas = require('./rotas/root');
+const errorhandler = require('./middleware/errorhandler');
+
 
 ligar();
 
