@@ -41,6 +41,43 @@ const lidarNovoUsuario = async (req, res) => {
     }
 };
 
+const alterarUsuarioId = async(req,res) => {
+    try {
+        const id = req.params.id;
+        const { primeironome, email, senha } = req.body;
+        
+        const user = await usuario.findById(id);
+        if(!user){
+            return res.status(400).json({message : "Usuário nao existe"});
+        }
+
+        // Se houver senha nova, criptografa ela
+        let senhaAtualizada = user.senha;
+        if (senha) {
+            senhaAtualizada = await bcrypt.hash(senha, 10);
+        }
+
+        // Atualiza os dados do usuário
+       const atualizarUsuario = await user.findByIdAndUpdate(
+        id,
+        { 
+            primeironome : primeironome || user.primeironome,
+            email : email || user.email,
+            senha : senhaAtualizada
+        },
+        { new : true}
+       )
+
+        res.status(200).json({ 
+            message: "Usuário atualizado com sucesso",
+            usuario: usuarioAtualizado 
+        });
+    } catch (error) {
+        console.error("Erro ao alterar usuário:", error);
+        res.status(500).json({ erro: "Erro ao alterar usuário" });
+    }
+};
+
 const deletarUsuarioId = async (req, res) => {
     try {
         const id = req.params.id;
@@ -93,6 +130,6 @@ const verificarlogin = async (req, res) => {
     }
 };
 
-module.exports = {buscarUsuario, lidarNovoUsuario, deletarUsuarioId, buscarPorId, verificarlogin };
+module.exports = {buscarUsuario, lidarNovoUsuario, deletarUsuarioId, buscarPorId, verificarlogin, alterarUsuarioId };
 
 

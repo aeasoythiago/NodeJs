@@ -19,13 +19,14 @@ const criarTarefa = async (req, res) =>{
 
 const buscarTarefa = async (req, res) => {
     try {
-        const tarefaBuscada = await tarefa.find();
+        const tarefaBuscada = await tarefa.find({ criadapor: req.usuario.id });
         if(tarefaBuscada.length === 0){
-            res.status(400).json({ message : 'Tarefa inexistente'});
+            return res.status(404).json({ message: 'Você não possui tarefas cadastradas'});
         }
         res.status(200).json(tarefaBuscada);
     } catch (error) {
-        res.status(400).json({ message : 'Erro ao buscar tarefa'});
+        console.error("Erro ao buscar tarefas:", error);
+        res.status(500).json({ message: 'Erro ao buscar tarefas'});
     }
 };
 
@@ -42,4 +43,33 @@ const deletarTarefa = async (req, res) => {
     }
 }
 
-module.exports = { criarTarefa, buscarTarefa, deletarTarefa};
+const alterarTarefa = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { titulo, descricao, status, prioridade, data } = req.body;
+        const tarefaEncontrada = await tarefa.findOne({ _id: id, criadapor: req.usuario.id });
+        if(!tarefaEncontrada){
+            return res.status(404).json({ message: 'Tarefa não encontrada ou você não tem permissão'});
+        }
+        const tarefaAtualizada = await tarefa.findByIdAndUpdate(
+            id,
+            {
+                titulo: titulo || tarefaEncontrada.titulo,
+                descricao: descricao || tarefaEncontrada.descricao,
+                status: status || tarefaEncontrada.status,
+                prioridade: prioridade || tarefaEncontrada.prioridade,
+                data: data || tarefaEncontrada.data
+            },
+            { new: true }
+        );
+        res.status(200).json({
+            message: 'Tarefa atualizada com sucesso',
+            tarefa: tarefaAtualizada
+        });
+    } catch (error) {
+        console.error("Erro ao alterar tarefa:", error);
+        res.status(500).json({ message: 'Erro ao alterar tarefa' });
+    }
+}
+
+module.exports = { criarTarefa, buscarTarefa, deletarTarefa, alterarTarefa };
