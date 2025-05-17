@@ -1,8 +1,22 @@
 const tarefa = require('../bancodedados/tarefas');
+const { validarTarefa } = require('../zod/verificador');
 
 const criarTarefa = async (req, res) =>{
     try {
     const {titulo1, descricao1, status1, prioridade1, data1} = req.body;
+        const tarefaValidada = await validarTarefa({
+            titulo : titulo1,
+            descricao : descricao1,
+            status : status1,
+            prioridade : prioridade1,
+            data : data1,
+        });
+        if(!tarefaValidada.valido){
+            return res.status(400).json({ 
+                message: 'Dados inválidos', 
+                erros: tarefaValidada.erro 
+            });
+        }
         const novaTarefa = await tarefa.create({
             titulo : titulo1,
             descricao : descricao1,
@@ -47,10 +61,12 @@ const alterarTarefa = async (req, res) => {
     try {
         const id = req.params.id;
         const { titulo, descricao, status, prioridade, data } = req.body;
+        
         const tarefaEncontrada = await tarefa.findOne({ _id: id, criadapor: req.usuario.id });
         if(!tarefaEncontrada){
             return res.status(404).json({ message: 'Tarefa não encontrada ou você não tem permissão'});
         }
+    
         const tarefaAtualizada = await tarefa.findByIdAndUpdate(
             id,
             {
@@ -62,6 +78,7 @@ const alterarTarefa = async (req, res) => {
             },
             { new: true }
         );
+
         res.status(200).json({
             message: 'Tarefa atualizada com sucesso',
             tarefa: tarefaAtualizada

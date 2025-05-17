@@ -20,7 +20,7 @@ const buscarUsuario = async (req,res) => {
 
 const lidarNovoUsuario = async (req, res) => {
     const { user, email, senha } = req.body;
-    const validacao = validarUsuario({primeironome : user, email, senha});
+    const validacao = await validarUsuario({primeironome : user, email, senha});
     if(!validacao.validado){
         return res.status(400).json({ message: 'Erro ao validar dados'});
     }
@@ -51,13 +51,11 @@ const alterarUsuarioId = async(req,res) => {
             return res.status(400).json({message : "Usuário nao existe"});
         }
 
-        // Se houver senha nova, criptografa ela
         let senhaAtualizada = user.senha;
         if (senha) {
             senhaAtualizada = await bcrypt.hash(senha, 10);
         }
 
-        // Atualiza os dados do usuário
        const atualizarUsuario = await user.findByIdAndUpdate(
         id,
         { 
@@ -119,7 +117,7 @@ const verificarlogin = async (req, res) => {
         const encontrarsenha = await bcrypt.compare(senha2, encontrarUser.senha);
         if(encontrarsenha){
             const token = jwt.sign({
-                id : encontrarUser._id , primeironome : encontrarUser.primeironome}, process.env.JWT_SECRET,{expiresIn : '2m'}
+                id : encontrarUser._id , primeironome : encontrarUser.primeironome}, process.env.JWT_SECRET,{expiresIn : '1h'}
             )
             res.json({ message :'Usuário logado com sucesso',token});
         }
