@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const criador = require('./criador');
+const criador = require('../users/criador');
 
 const tarefasSchema = new mongoose.Schema({
     titulo: {

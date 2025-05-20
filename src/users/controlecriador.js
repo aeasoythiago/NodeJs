@@ -1,8 +1,7 @@
-const usuario = require('./../bancodedados/criador');
+const usuario = require('./criador');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { validarUsuario } = require('./../verificador');
 
 
 const buscarUsuario = async (req,res) => {
@@ -19,23 +18,19 @@ const buscarUsuario = async (req,res) => {
 };
 
 const lidarNovoUsuario = async (req, res) => {
-    const { user, email, senha } = req.body;
-    const validacao = await validarUsuario({primeironome : user, email, senha});
-    if(!validacao.validado){
-        return res.status(400).json({ message: 'Erro ao validar dados'});
-    }
-    const duplicado = await usuario.findOne({ primeironome: user });
+    const { primeironome, email, senha } = req.body;
+    const duplicado = await usuario.findOne({ email });
     if (duplicado) {
         return res.status(400).json({ message: 'Usuário já existente.\n' });
     }
     try {
-        const senha2 = await bcrypt.hash(senha, 10);
-        const novoUsuario = await usuario.create({
-            primeironome: user,
-            email: email,
-            senha: senha2
+        const senhacrypt = await bcrypt.hash(senha, 10);
+        const user = await usuario.create({
+            primeironome,
+            email,
+            senha: senhacrypt
         });
-        res.status(200).json({ message : `Novo usuário ${user} criado.\n` });
+        res.status(200).json({ message : `Novo usuário ${user.primeironome} criado.\n` });
     } catch (error) {
         res.status(400).json({ message : error.message });
     }
@@ -56,7 +51,7 @@ const alterarUsuarioId = async(req,res) => {
             senhaAtualizada = await bcrypt.hash(senha, 10);
         }
 
-       const atualizarUsuario = await user.findByIdAndUpdate(
+       const usuarioAtualizado = await usuario.findByIdAndUpdate(
         id,
         { 
             primeironome : primeironome || user.primeironome,
@@ -106,15 +101,15 @@ const buscarPorId = async (req, res) => {
 
 const verificarlogin = async (req, res) => {
     try {
-        const {user,senha2} = req.body;
-        if(!user || !senha2){
-            return res.status(400).json({ message :'Usuário e senha são necessários.\n'})
+        const {email,senha} = req.body;
+        if(!email || !senha){
+            return res.status(400).json({ message :'Email e senha são necessários.\n'})
         }
-        const encontrarUser = await usuario.findOne({primeironome : user});
+        const encontrarUser = await usuario.findOne({email});
         if(!encontrarUser){
             return res.status(400).json({ message :'Usuário não existe'});
         }
-        const encontrarsenha = await bcrypt.compare(senha2, encontrarUser.senha);
+        const encontrarsenha = await bcrypt.compare(senha, encontrarUser.senha);
         if(encontrarsenha){
             const token = jwt.sign({
                 id : encontrarUser._id , primeironome : encontrarUser.primeironome}, process.env.JWT_SECRET,{expiresIn : '1h'}

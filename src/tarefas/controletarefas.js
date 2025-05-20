@@ -1,28 +1,15 @@
-const tarefa = require('../bancodedados/tarefas');
-const { validarTarefa } = require('../zod/verificador');
+const tarefa = require('./tarefas');
+const { validarTarefa } = require('./validartarefa');
 
 const criarTarefa = async (req, res) =>{
     try {
-    const {titulo1, descricao1, status1, prioridade1, data1} = req.body;
-        const tarefaValidada = await validarTarefa({
-            titulo : titulo1,
-            descricao : descricao1,
-            status : status1,
-            prioridade : prioridade1,
-            data : data1,
-        });
-        if(!tarefaValidada.valido){
-            return res.status(400).json({ 
-                message: 'Dados inválidos', 
-                erros: tarefaValidada.erro 
-            });
-        }
+    const {titulo, descricao, status, prioridade, data} = req.body;
         const novaTarefa = await tarefa.create({
-            titulo : titulo1,
-            descricao : descricao1,
-            status : status1,
-            prioridade : prioridade1,
-            data : data1,
+            titulo,
+            descricao,
+            status,
+            prioridade,
+            data,
             criadapor : req.usuario.id
         })
         res.status(200).json({message : 'Nova tarefa criada com sucesso', tarefa : novaTarefa});
