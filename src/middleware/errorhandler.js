@@ -1,6 +1,17 @@
-const errorhandler = (error, req, res, next) => {
-    console.error(error.stack);
-    res.status(500).json({message: 'Algo deu errado'});
+const errorHandler = (err, req, res, next) => {
+    console.error(err);
+
+    // Se for um erro personalizado, usa o status code dele
+    if (err.statusCode) {
+        return res.status(err.statusCode).json({
+            erro: err.message
+        });
+    }
+
+    // Erro padrão
+    res.status(500).json({
+        erro: err.message || 'Erro interno do servidor'
+    });
 };
 
-module.exports = errorhandler;
+module.exports = errorHandler;

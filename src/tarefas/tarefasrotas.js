@@ -6,9 +6,9 @@ const validador = require('../utils/validador');
 const { tarefasSchema } = require('./validartarefa')
 
 // Rotas protegidas(Tarefas)
-rota.post('/criartarefa',validador(tarefasSchema),verificarToken, tarefaFuncao.criarTarefa);
-rota.get('/buscartarefa', verificarToken, tarefaFuncao.buscarTarefa);
+rota.post('/criartarefa', validador(tarefasSchema), verificarToken, tarefaFuncao.criarTarefa);
+rota.get('/listartarefas', verificarToken, tarefaFuncao.listarTarefas);
 rota.put('/atualizartarefa/:id', verificarToken, tarefaFuncao.alterarTarefa);
-rota.delete('/deletartarefa', verificarToken, tarefaFuncao.deletarTarefa);
+rota.delete('/deletartarefa/:id', verificarToken, tarefaFuncao.deletarTarefa);
 
 module.exports = rota;

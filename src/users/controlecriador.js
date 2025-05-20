@@ -1,128 +1,53 @@
-const usuario = require('./criador');
+const usuarioService = require('./servicecriador');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
 
-const buscarUsuario = async (req,res) => {
-    try {
-        const user = await usuario.find({});
-        if(!user){
-            return res.status(400).json({message : "Usuário nao existe"})
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        console.error("Erro ao encontrar usuário:", error);
-        res.status(500).json({ erro: "Erro ao encontrar usuários" });
-    }
+const buscarUsuario = async (req, res) => {
+    const users = await usuarioService.buscarTodosUsuarios();
+    res.status(200).json(users);
 };
 
 const lidarNovoUsuario = async (req, res) => {
-    const { primeironome, email, senha } = req.body;
-    const duplicado = await usuario.findOne({ email });
-    if (duplicado) {
-        return res.status(400).json({ message: 'Usuário já existente.\n' });
-    }
-    try {
-        const senhacrypt = await bcrypt.hash(senha, 10);
-        const user = await usuario.create({
-            primeironome,
-            email,
-            senha: senhacrypt
-        });
-        res.status(200).json({ message : `Novo usuário ${user.primeironome} criado.\n` });
-    } catch (error) {
-        res.status(400).json({ message : error.message });
-    }
+    const user = await usuarioService.criarUsuario(req.body);
+    res.status(200).json({ message: `Novo usuário ${user.primeironome} criado.` });
 };
 
-const alterarUsuarioId = async(req,res) => {
-    try {
-        const id = req.params.id;
-        const { primeironome, email, senha } = req.body;
-        
-        const user = await usuario.findById(id);
-        if(!user){
-            return res.status(400).json({message : "Usuário nao existe"});
-        }
-
-        let senhaAtualizada = user.senha;
-        if (senha) {
-            senhaAtualizada = await bcrypt.hash(senha, 10);
-        }
-
-       const usuarioAtualizado = await usuario.findByIdAndUpdate(
-        id,
-        { 
-            primeironome : primeironome || user.primeironome,
-            email : email || user.email,
-            senha : senhaAtualizada
-        },
-        { new : true}
-       )
-
-        res.status(200).json({ 
-            message: "Usuário atualizado com sucesso",
-            usuario: usuarioAtualizado 
-        });
-    } catch (error) {
-        console.error("Erro ao alterar usuário:", error);
-        res.status(500).json({ erro: "Erro ao alterar usuário" });
-    }
+const alterarUsuarioId = async (req, res) => {
+    const usuarioAtualizado = await usuarioService.atualizarUsuario(req.params.id, req.body);
+    res.status(200).json({
+        message: "Usuário atualizado com sucesso",
+        usuario: usuarioAtualizado
+    });
 };
 
 const deletarUsuarioId = async (req, res) => {
-    try {
-        const id = req.params.id;
-        const resultado = await usuario.deleteOne({_id: id});
-        if(resultado.deletedCount === 0){
-            return res.status(400).json({message : "Usuário nao existe"})
-        }
-        res.status(200).json({ message: "Usuário deletado com sucesso" });
-    } catch (error) {
-        console.error("Erro ao deletar usuário", error);
-        res.status(500).json({ erro: "Erro ao deletar usuário" });
-    }
+    await usuarioService.deletarUsuario(req.params.id);
+    res.status(200).json({ message: "Usuário deletado com sucesso" });
 };
 
 const buscarPorId = async (req, res) => {
-    try {
-        const id = req.params.id;
-        const user = await usuario.findById(id);
-        if(!user){
-            return res.status(400).json({message : "Usuário nao existe"})
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        console.error("Erro ao encontrar usuário", error);
-        res.status(500).json({ erro: "Erro ao encontrar usuário" });
-    }
+    const user = await usuarioService.buscarUsuarioPorId(req.params.id);
+    res.status(200).json(user);
 };
 
 const verificarlogin = async (req, res) => {
-    try {
-        const {email,senha} = req.body;
-        if(!email || !senha){
-            return res.status(400).json({ message :'Email e senha são necessários.\n'})
-        }
-        const encontrarUser = await usuario.findOne({email});
-        if(!encontrarUser){
-            return res.status(400).json({ message :'Usuário não existe'});
-        }
-        const encontrarsenha = await bcrypt.compare(senha, encontrarUser.senha);
-        if(encontrarsenha){
-            const token = jwt.sign({
-                id : encontrarUser._id , primeironome : encontrarUser.primeironome}, process.env.JWT_SECRET,{expiresIn : '1h'}
-            )
-            res.json({ message :'Usuário logado com sucesso',token});
-        }
-        else
-            res.status(400).json({ message :'Senha incorreta.\n'});
-    } catch (error) {
-        res.status(400).json({message : 'Erro interno'});
-    }
+    const { token, usuario } = await usuarioService.fazerLogin(req.body);
+    res.json({
+        message: 'Usuário logado com sucesso',
+        token,
+        usuario
+    });
 };
 
-module.exports = {buscarUsuario, lidarNovoUsuario, deletarUsuarioId, buscarPorId, verificarlogin, alterarUsuarioId };
+module.exports = {
+    buscarUsuario,
+    lidarNovoUsuario,
+    deletarUsuarioId,
+    buscarPorId,
+    verificarlogin,
+    alterarUsuarioId
+};
 
 
